@@ -1,0 +1,99 @@
+import { StyleSheet, Text, View } from 'react-native';
+
+import { BeanMarkerBoard } from '@/components/BeanMarkerBoard';
+import { CardMarkerBoard } from '@/components/CardMarkerBoard';
+import { CrystalMarkerBoard } from '@/components/CrystalMarkerBoard';
+import { fonts, spacing } from '@/constants/theme';
+import type { ScoreStyle, TrucoVariant } from '@/types/match';
+
+interface CardPointTrackerProps {
+  accentColor: string;
+  score: number;
+  scoreStyle: ScoreStyle;
+  targetScore: number;
+  variant: TrucoVariant;
+}
+
+function clampScore(score: number, targetScore: number) {
+  return Math.max(0, Math.min(score, targetScore));
+}
+
+function getCaption(
+  score: number,
+  scoreStyle: ScoreStyle,
+  targetScore: number,
+  variant: TrucoVariant
+) {
+  const safeScore = clampScore(score, targetScore);
+
+  if (scoreStyle === 'cards') {
+    if (variant === 'truco-espanhol' && safeScore > 9) {
+      return `9 + ${Math.min(safeScore - 9, 9)}`;
+    }
+
+    return variant === 'truco-paulista'
+      ? `${Math.min(safeScore, 12)} / 12`
+      : `${Math.min(safeScore, 9)} / 9`;
+  }
+
+  if (targetScore === 18 && safeScore > 9) {
+    return `9 + ${Math.min(safeScore - 9, 9)}`;
+  }
+
+  return `${safeScore} / ${targetScore}`;
+}
+
+export function CardPointTracker({
+  accentColor,
+  score,
+  scoreStyle,
+  targetScore,
+  variant,
+}: CardPointTrackerProps) {
+  const caption = getCaption(score, scoreStyle, targetScore, variant);
+
+  return (
+    <View style={styles.root}>
+      {scoreStyle === 'cards' ? (
+        <CardMarkerBoard
+          accentColor={accentColor}
+          score={score}
+          targetScore={targetScore}
+          variant={variant}
+        />
+      ) : null}
+
+      {scoreStyle === 'beans' ? (
+        <BeanMarkerBoard
+          accentColor={accentColor}
+          score={score}
+          targetScore={targetScore}
+        />
+      ) : null}
+
+      {scoreStyle === 'crystals' ? (
+        <CrystalMarkerBoard
+          accentColor={accentColor}
+          score={score}
+          targetScore={targetScore}
+        />
+      ) : null}
+
+      <Text style={[styles.caption, { color: accentColor }]}>{caption}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  caption: {
+    alignSelf: 'center',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    fontFamily: fonts.body,
+  },
+  root: {
+    gap: spacing.xs,
+  },
+});
