@@ -5,7 +5,7 @@ import { CardRevealMarker } from '@/components/CardRevealMarker';
 import {
   paulistaCardStates,
   spanishCardStates,
-} from '@/components/scoreboard/CardScoreStates';
+} from '@/components/scoreboard/CardCoverStates';
 import { trucoAssets } from '@/constants/trucoAssets';
 import { colors, radii } from '@/constants/theme';
 import type { TrucoVariant } from '@/types/match';
@@ -59,9 +59,9 @@ export function CardMarkerBoard({
   const topCardMode = activeState.face === 'front' ? 'turned' : 'covered';
   const topCardTransform = {
     transform: [
-      { translateX: activeState.shiftX * cardWidth },
-      { translateY: activeState.shiftY * cardHeight },
-      { rotate: `${activeState.rotateDeg}deg` },
+      { translateX: activeState.x },
+      { translateY: activeState.y },
+      { rotate: `${activeState.rotate}deg` },
     ],
   } as const;
 
