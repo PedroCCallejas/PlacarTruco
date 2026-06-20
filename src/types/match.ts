@@ -67,6 +67,7 @@ export interface HistoryEntry {
 
 export interface MatchStoreState extends MatchSnapshot {
   history: HistoryEntry[];
+  placementSeed: number;
   scoreStyle: ScoreStyle;
 }
 

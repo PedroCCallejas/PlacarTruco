@@ -15,12 +15,13 @@ import { spacing } from '@/constants/theme';
 interface PointMarkersProps {
   accentColor: string;
   markerStyle: 'beans' | 'crystals';
+  placementSeed: number;
   score: number;
   targetScore: number;
   turned: boolean;
 }
 
-interface SpreadPoint {
+interface MarkerPosition {
   rotate: string;
   scale: number;
   x: number;
@@ -37,76 +38,37 @@ interface ScatterMarkerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const BEAN_SPREADS: Record<number, SpreadPoint[]> = {
-  5: [
-    { x: 18, y: 24, rotate: '-14deg', scale: 1.02 },
-    { x: 42, y: 16, rotate: '9deg', scale: 0.94 },
-    { x: 66, y: 26, rotate: '-6deg', scale: 1.08 },
-    { x: 30, y: 62, rotate: '16deg', scale: 0.98 },
-    { x: 62, y: 68, rotate: '-18deg', scale: 1.04 },
-  ],
-  6: [
-    { x: 16, y: 22, rotate: '-18deg', scale: 1.04 },
-    { x: 40, y: 14, rotate: '11deg', scale: 0.94 },
-    { x: 66, y: 22, rotate: '-10deg', scale: 1.08 },
-    { x: 26, y: 54, rotate: '17deg', scale: 0.98 },
-    { x: 54, y: 46, rotate: '-7deg', scale: 1.02 },
-    { x: 74, y: 66, rotate: '13deg', scale: 1.06 },
-  ],
-  9: [
-    { x: 16, y: 14, rotate: '-14deg', scale: 1.02 },
-    { x: 40, y: 12, rotate: '8deg', scale: 0.96 },
-    { x: 66, y: 18, rotate: '-9deg', scale: 1.08 },
-    { x: 26, y: 36, rotate: '16deg', scale: 0.98 },
-    { x: 50, y: 34, rotate: '-5deg', scale: 1.04 },
-    { x: 76, y: 40, rotate: '11deg', scale: 0.94 },
-    { x: 22, y: 66, rotate: '-16deg', scale: 1.06 },
-    { x: 48, y: 72, rotate: '12deg', scale: 0.98 },
-    { x: 72, y: 68, rotate: '-7deg', scale: 1.08 },
-  ],
+const seededUnit = (seed: number): number => {
+  const raw = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return raw - Math.floor(raw);
 };
 
-const CRYSTAL_SPREADS: Record<number, SpreadPoint[]> = {
-  5: [
-    { x: 22, y: 20, rotate: '-12deg', scale: 0.92 },
-    { x: 48, y: 14, rotate: '10deg', scale: 1.06 },
-    { x: 72, y: 24, rotate: '-8deg', scale: 1 },
-    { x: 32, y: 60, rotate: '14deg', scale: 0.94 },
-    { x: 62, y: 66, rotate: '-16deg', scale: 1.08 },
-  ],
-  6: [
-    { x: 18, y: 18, rotate: '-10deg', scale: 0.94 },
-    { x: 42, y: 12, rotate: '8deg', scale: 1.04 },
-    { x: 68, y: 20, rotate: '-14deg', scale: 1.02 },
-    { x: 24, y: 52, rotate: '14deg', scale: 0.98 },
-    { x: 52, y: 44, rotate: '-6deg', scale: 1.1 },
-    { x: 76, y: 60, rotate: '12deg', scale: 0.9 },
-  ],
-  9: [
-    { x: 18, y: 14, rotate: '-14deg', scale: 0.94 },
-    { x: 42, y: 12, rotate: '9deg', scale: 1.04 },
-    { x: 68, y: 18, rotate: '-8deg', scale: 1.08 },
-    { x: 28, y: 34, rotate: '16deg', scale: 0.92 },
-    { x: 54, y: 32, rotate: '-4deg', scale: 1.1 },
-    { x: 78, y: 38, rotate: '11deg', scale: 0.96 },
-    { x: 22, y: 64, rotate: '-18deg', scale: 1.02 },
-    { x: 50, y: 70, rotate: '14deg', scale: 0.98 },
-    { x: 72, y: 66, rotate: '-10deg', scale: 1.06 },
-  ],
+const generateMarkerPosition = (
+  placementSeed: number,
+  markerIndex: number,
+  markerStyle: PointMarkersProps['markerStyle']
+): MarkerPosition => {
+  const b = placementSeed + markerIndex * 97;
+  const x = 11 + seededUnit(b) * 78;           // 11% – 89%
+  const y = 15 + seededUnit(b + 1) * 62;        // 15% – 77%
+  const rotateDeg = (seededUnit(b + 2) - 0.5) * 56; // -28° – 28°
+  const scale =
+    markerStyle === 'beans'
+      ? 0.88 + seededUnit(b + 3) * 0.28         // 0.88 – 1.16
+      : 0.84 + seededUnit(b + 3) * 0.32;        // 0.84 – 1.16
+
+  return {
+    x: Math.min(89, Math.max(11, x)),
+    y: Math.min(85, Math.max(15, y)),
+    rotate: `${rotateDeg.toFixed(1)}deg`,
+    scale: Math.min(1.16, Math.max(0.84, scale)),
+  };
 };
 
 const buildMarkerGroups = (targetScore: number): number[] => {
-  if (targetScore === 12) {
-    return [6, 6];
-  }
-
-  if (targetScore === 15) {
-    return [5, 5, 5];
-  }
-
-  if (targetScore === 18) {
-    return [9, 9];
-  }
+  if (targetScore === 12) return [6, 6];
+  if (targetScore === 15) return [5, 5, 5];
+  if (targetScore === 18) return [9, 9];
 
   const groups: number[] = [];
   let remaining = targetScore;
@@ -124,71 +86,6 @@ const hasAssetSource = (
   asset: TrucoAssetSource
 ): asset is Exclude<TrucoAssetSource, null> => asset !== null;
 
-const createFallbackSpread = (
-  index: number,
-  count: number,
-  markerStyle: PointMarkersProps['markerStyle']
-): SpreadPoint => {
-  const columns = Math.max(2, Math.ceil(Math.sqrt(count)));
-  const row = Math.floor(index / columns);
-  const column = index % columns;
-  const columnSpread = columns === 1 ? 50 : 18 + (column / (columns - 1)) * 58;
-
-  return {
-    x: columnSpread + (row % 2 === 0 ? -2 : 4),
-    y: 18 + row * 24 + (index % 2 === 0 ? 0 : 6),
-    rotate: `${(index % 5) * 8 - 16}deg`,
-    scale: markerStyle === 'beans' ? 0.96 + (index % 3) * 0.05 : 0.92 + (index % 4) * 0.04,
-  };
-};
-
-const getSpreadLayout = (
-  markerStyle: PointMarkersProps['markerStyle'],
-  count: number
-): SpreadPoint[] => {
-  const preset = markerStyle === 'beans' ? BEAN_SPREADS[count] : CRYSTAL_SPREADS[count];
-
-  if (preset) {
-    return preset;
-  }
-
-  return Array.from({ length: count }, (_, index) =>
-    createFallbackSpread(index, count, markerStyle)
-  );
-};
-
-const seededUnit = (seed: number): number => {
-  const raw = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
-
-  return raw - Math.floor(raw);
-};
-
-const clampSpread = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const createScatterSpread = (
-  spread: SpreadPoint,
-  markerStyle: PointMarkersProps['markerStyle'],
-  targetScore: number,
-  groupIndex: number,
-  markerIndex: number
-): SpreadPoint => {
-  const seedBase =
-    (markerStyle === 'beans' ? 17 : 29) + targetScore * 7 + groupIndex * 19 + markerIndex * 23;
-  const jitterRange = markerStyle === 'beans' ? 5 : 6;
-  const xJitter = (seededUnit(seedBase) - 0.5) * jitterRange;
-  const yJitter = (seededUnit(seedBase + 1) - 0.5) * (jitterRange - 1);
-  const rotateJitter = (seededUnit(seedBase + 2) - 0.5) * (markerStyle === 'beans' ? 10 : 14);
-  const scaleJitter = (seededUnit(seedBase + 3) - 0.5) * 0.08;
-
-  return {
-    x: clampSpread(spread.x + xJitter, 12, 82),
-    y: clampSpread(spread.y + yJitter, 10, 84),
-    rotate: `${Number.parseFloat(spread.rotate) + rotateJitter}deg`,
-    scale: clampSpread(spread.scale + scaleJitter, 0.9, 1.18),
-  };
-};
-
 const getEntryMotion = (
   markerStyle: PointMarkersProps['markerStyle'],
   groupIndex: number,
@@ -198,10 +95,10 @@ const getEntryMotion = (
 
   return {
     delay: Math.round(seededUnit(seedBase) * 80),
-    entryRotateDeg: (seededUnit(seedBase + 1) - 0.5) * (markerStyle === 'beans' ? 42 : 58),
-    entryX: (seededUnit(seedBase + 2) - 0.5) * (markerStyle === 'beans' ? 28 : 38),
-    entryY: -18 - seededUnit(seedBase + 3) * (markerStyle === 'beans' ? 26 : 34),
-    entryZoom: 0.84 + seededUnit(seedBase + 4) * 0.16,
+    entryRotateDeg: (seededUnit(seedBase + 1) - 0.5) * (markerStyle === 'beans' ? 240 : 300),
+    entryX: (seededUnit(seedBase + 2) - 0.5) * (markerStyle === 'beans' ? 36 : 48),
+    entryY: -30 - seededUnit(seedBase + 3) * (markerStyle === 'beans' ? 50 : 60),
+    entryZoom: 0.80 + seededUnit(seedBase + 4) * 0.20,
   };
 };
 
@@ -209,10 +106,7 @@ const getGroupHeight = (
   markerStyle: PointMarkersProps['markerStyle'],
   count: number
 ): number => {
-  if (markerStyle === 'beans') {
-    return count >= 9 ? 144 : 104;
-  }
-
+  if (markerStyle === 'beans') return count >= 9 ? 144 : 104;
   return count >= 9 ? 132 : 96;
 };
 
@@ -256,15 +150,16 @@ function ScatterMarker({
         }),
         Animated.spring(translateY, {
           toValue: 0,
-          damping: 12,
-          mass: 0.9,
-          stiffness: 165,
+          damping: 7,
+          mass: 0.85,
+          stiffness: 200,
           useNativeDriver: true,
         }),
-        Animated.timing(rotate, {
+        Animated.spring(rotate, {
           toValue: 0,
-          duration: 360,
-          easing: Easing.out(Easing.cubic),
+          damping: 6,
+          mass: 0.8,
+          stiffness: 55,
           useNativeDriver: true,
         }),
         Animated.spring(scale, {
@@ -318,8 +213,9 @@ function ScatterMarker({
 }
 
 export function PointMarkers({
-  accentColor,
+  accentColor: _accentColor,
   markerStyle,
+  placementSeed,
   score,
   targetScore,
   turned,
@@ -340,13 +236,8 @@ export function PointMarkers({
   let markerIndex = 0;
 
   return (
-    <View
-      style={[
-        styles.container,
-        safeTarget === 18 ? styles.containerSplit : null,
-      ]}>
+    <View style={[styles.container, safeTarget === 18 ? styles.containerSplit : null]}>
       {groups.map((groupSize, groupIndex) => {
-        const layout = getSpreadLayout(markerStyle, groupSize);
         const stageHeight = getGroupHeight(markerStyle, groupSize);
         const markers = Array.from({ length: groupSize }, () => {
           const currentIndex = markerIndex;
@@ -362,21 +253,16 @@ export function PointMarkers({
               isBean ? styles.scatterAreaBeans : styles.scatterAreaCrystals,
               { minHeight: stageHeight },
             ]}>
-            {markers.map((index, itemIndex) => {
+            {markers.map((index) => {
               const active = index < safeScore;
-              const asset = markerAssets.length > 0 ? markerAssets[index % markerAssets.length] : null;
+              const asset =
+                markerAssets.length > 0 ? markerAssets[index % markerAssets.length] : null;
 
               if (!active || !asset) {
                 return null;
               }
 
-              const spread = createScatterSpread(
-                layout[itemIndex] ?? createFallbackSpread(itemIndex, groupSize, markerStyle),
-                markerStyle,
-                safeTarget,
-                groupIndex,
-                index
-              );
+              const position = generateMarkerPosition(placementSeed, index, markerStyle);
               const inSecondHalf = safeTarget === 18 && index >= 9;
               const width = isBean ? 34 : 36;
               const height = isBean ? 46 : 36;
@@ -394,10 +280,10 @@ export function PointMarkers({
                   style={[
                     styles.markerAnchor,
                     {
-                      left: `${spread.x}%`,
+                      left: `${position.x}%`,
                       marginLeft: -width / 2,
                       marginTop: -height / 2,
-                      top: `${spread.y}%`,
+                      top: `${position.y}%`,
                     },
                   ]}>
                   <View
@@ -410,8 +296,8 @@ export function PointMarkers({
                         height,
                         opacity: turned && inSecondHalf ? 1 : 0.97,
                         transform: [
-                          { rotate: spread.rotate },
-                          { scale: spread.scale * turnedScaleBoost },
+                          { rotate: position.rotate },
+                          { scale: position.scale * turnedScaleBoost },
                         ],
                       },
                     ]}>

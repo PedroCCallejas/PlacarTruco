@@ -3,7 +3,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { CardRevealMarker } from '@/components/CardRevealMarker';
 import {
-  paulistaCardStates,
+  paulistaTenCardStates,
   spanishCardStates,
 } from '@/components/scoreboard/CardCoverStates';
 import { trucoAssets } from '@/constants/trucoAssets';
@@ -12,6 +12,7 @@ import type { TrucoVariant } from '@/types/match';
 
 interface CardMarkerBoardProps {
   accentColor: string;
+  availableHeight: number;
   score: number;
   targetScore: number;
   variant: TrucoVariant;
@@ -25,12 +26,14 @@ function clampScore(variant: TrucoVariant, score: number, targetScore: number) {
 
 export function CardMarkerBoard({
   accentColor,
+  availableHeight,
   score,
   targetScore,
   variant,
 }: CardMarkerBoardProps) {
   const { height, width } = useWindowDimensions();
   const compact = width < 420 || height < 760;
+  const isLandscape = width > height;
   const safeScore = clampScore(variant, score, targetScore);
   const frontAsset =
     variant === 'truco-paulista'
@@ -41,19 +44,26 @@ export function CardMarkerBoard({
       ? trucoAssets.cards.cardBackBlue
       : trucoAssets.cards.cardBackRed;
   const shadowAsset = trucoAssets.shadows.cardShadow;
-  const cardWidth = compact ? 112 : width < 900 ? 124 : 140;
+  // Same card dimensions in both orientations — keeps x/y/rotate calibration consistent.
+  // cardScale handles fit; landscape teams have full height so cards are ≥ portrait size.
+  const cardWidth = compact ? 112 : 130;
   const cardHeight = Math.round(cardWidth * 1.414);
-  const stageWidth = cardWidth + (compact ? 84 : 96);
-  const stageHeight = cardHeight + (compact ? 30 : 36);
+  const stageWidth = cardWidth + (compact ? 88 : 100);
+  const stageHeight = cardHeight + (compact ? 58 : 68);
   const baseCardLeft = compact ? 8 : 10;
-  const baseCardTop = compact ? 26 : 28;
+  const baseCardTop = compact ? 24 : 26;
   const topCardAnchorLeft = compact ? 14 : 18;
   const topCardAnchorTop = compact ? 4 : 6;
+  // Use measured markerZone height when available; fall back to screen-height ratio.
+  // availableHeight > 10 guards against initial zero value before layout fires.
+  const cardScale = availableHeight > 10
+    ? Math.min(availableHeight / stageHeight, 1)
+    : Math.min((height * (isLandscape ? 0.38 : 0.20)) / stageHeight, 1);
   const shadowWidth = cardWidth + 10;
   const shadowHeight = cardHeight + 12;
   const activeState =
     variant === 'truco-paulista'
-      ? paulistaCardStates[safeScore]
+      ? paulistaTenCardStates[safeScore]
       : spanishCardStates[safeScore];
   const topCardAsset = activeState.face === 'front' ? frontAsset : backAsset;
   const topCardMode = activeState.face === 'front' ? 'turned' : 'covered';
@@ -67,7 +77,7 @@ export function CardMarkerBoard({
 
   return (
     <View style={styles.stage}>
-      <View style={[styles.canvas, { width: stageWidth, height: stageHeight }]}>
+      <View style={[styles.canvas, { width: stageWidth, height: stageHeight, transform: [{ scale: cardScale }] }]}>
         {shadowAsset ? (
           <Image
             contentFit="contain"
@@ -139,11 +149,9 @@ export function CardMarkerBoard({
 
 const styles = StyleSheet.create({
   baseTilt: {
-    transform: [{ rotate: '-6deg' }],
+    transform: [{ rotate: '0deg' }],
   },
-  canvas: {
-    position: 'relative',
-  },
+  canvas: {},
   cardBase: {
     position: 'absolute',
     overflow: 'hidden',

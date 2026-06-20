@@ -6,12 +6,14 @@ import { trucoAssets } from '@/constants/trucoAssets';
 
 interface BeanMarkerBoardProps {
   accentColor: string;
+  placementSeed: number;
   score: number;
   targetScore: number;
 }
 
 export function BeanMarkerBoard({
   accentColor,
+  placementSeed,
   score,
   targetScore,
 }: BeanMarkerBoardProps) {
@@ -37,6 +39,7 @@ export function BeanMarkerBoard({
         <PointMarkers
           accentColor={accentColor}
           markerStyle="beans"
+          placementSeed={placementSeed}
           score={score}
           targetScore={targetScore}
           turned={turned}

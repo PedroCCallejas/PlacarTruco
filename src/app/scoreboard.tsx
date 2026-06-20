@@ -80,8 +80,10 @@ function TeamSelectorButton({
 export default function ScoreboardScreen() {
   const { height, width } = useWindowDimensions();
   const isCompact = width < 420 || height < 760;
+  const isLandscape = width > height;
 
   const addPoints = useMatchStore((state) => state.addPoints);
+  const placementSeed = useMatchStore((state) => state.placementSeed);
   const bestOf = useMatchStore((state) => state.bestOf);
   const canUndo = useMatchStore(matchStoreSelectors.canUndo);
   const currentScore = useMatchStore((state) => state.currentScore);
@@ -200,13 +202,14 @@ export default function ScoreboardScreen() {
           ) : null}
 
           <View style={styles.tableZone}>
-            <View style={styles.cardRow}>
+            <View style={[styles.cardRow, !isLandscape && styles.cardRowPortrait]}>
               <CardScore
                 accentColor={colors.gold}
                 bestOf={bestOf}
                 isActive={activeTeam === 'teamA'}
                 label="A"
                 onPress={() => setActiveTeam('teamA')}
+                placementSeed={placementSeed}
                 score={currentScore.teamA}
                 scoreStyle={scoreStyle}
                 sets={sets.teamA}
@@ -220,6 +223,7 @@ export default function ScoreboardScreen() {
                 isActive={activeTeam === 'teamB'}
                 label="B"
                 onPress={() => setActiveTeam('teamB')}
+                placementSeed={placementSeed + 500_000}
                 score={currentScore.teamB}
                 scoreStyle={scoreStyle}
                 sets={sets.teamB}
@@ -230,55 +234,98 @@ export default function ScoreboardScreen() {
             </View>
           </View>
 
-          <View style={styles.bottomDock}>
-            <View style={styles.selectionRow}>
-              <View style={styles.selectionCopy}>
-                <Text style={styles.selectionLabel}>
-                  {phase === 'idle' ? 'Mesa pronta' : 'Selecionado'}
-                </Text>
-                <Text style={[styles.selectionValue, { color: activeAccentColor }]}>
-                  {phase === 'idle' ? 'Abra a engrenagem para iniciar' : activeTeamName}
-                </Text>
-              </View>
+          <View style={[styles.bottomDock, isLandscape && styles.bottomDockLandscape]}>
+            {isLandscape ? (
+              <>
+                <View style={styles.landscapeTopRow}>
+                  <View style={styles.teamSelectorRow}>
+                    <TeamSelectorButton
+                      accentColor={colors.gold}
+                      active={activeTeam === 'teamA'}
+                      label={teamA}
+                      onPress={() => setActiveTeam('teamA')}
+                    />
+                    <TeamSelectorButton
+                      accentColor={colors.red}
+                      active={activeTeam === 'teamB'}
+                      label={teamB}
+                      onPress={() => setActiveTeam('teamB')}
+                    />
+                  </View>
+                  <View style={[styles.pointsRow, styles.pointsRowExpand]}>
+                    {scoreActions.map((action) => (
+                      <ScorePointButton
+                        accentColor={activeAccentColor}
+                        disabled={scoreLocked}
+                        key={`score-${action.points}`}
+                        label={action.label}
+                        onPress={() => handleAddPoints(action.points)}
+                      />
+                    ))}
+                  </View>
+                </View>
+                <View style={styles.utilityRow}>
+                  <ScoreActionPanel
+                    canUndo={canUndo}
+                    isCompact={true}
+                    onResetCurrentSet={resetCurrentSet}
+                    onResetMatch={resetMatch}
+                    onUndo={undoLastAction}
+                    phase={phase}
+                  />
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.selectionRow}>
+                  <View style={styles.selectionCopy}>
+                    <Text style={styles.selectionLabel}>
+                      {phase === 'idle' ? 'Mesa pronta' : 'Selecionado'}
+                    </Text>
+                    <Text style={[styles.selectionValue, { color: activeAccentColor }]}>
+                      {phase === 'idle' ? 'Abra a engrenagem para iniciar' : activeTeamName}
+                    </Text>
+                  </View>
+                  <View style={styles.teamSelectorRow}>
+                    <TeamSelectorButton
+                      accentColor={colors.gold}
+                      active={activeTeam === 'teamA'}
+                      label={teamA}
+                      onPress={() => setActiveTeam('teamA')}
+                    />
+                    <TeamSelectorButton
+                      accentColor={colors.red}
+                      active={activeTeam === 'teamB'}
+                      label={teamB}
+                      onPress={() => setActiveTeam('teamB')}
+                    />
+                  </View>
+                </View>
 
-              <View style={styles.teamSelectorRow}>
-                <TeamSelectorButton
-                  accentColor={colors.gold}
-                  active={activeTeam === 'teamA'}
-                  label={teamA}
-                  onPress={() => setActiveTeam('teamA')}
-                />
-                <TeamSelectorButton
-                  accentColor={colors.red}
-                  active={activeTeam === 'teamB'}
-                  label={teamB}
-                  onPress={() => setActiveTeam('teamB')}
-                />
-              </View>
-            </View>
+                <View style={styles.pointsRow}>
+                  {scoreActions.map((action) => (
+                    <ScorePointButton
+                      accentColor={activeAccentColor}
+                      disabled={scoreLocked}
+                      key={`score-${action.points}`}
+                      label={action.label}
+                      onPress={() => handleAddPoints(action.points)}
+                    />
+                  ))}
+                </View>
 
-            <View style={styles.pointsRow}>
-              {scoreActions.map((action) => (
-                <ScorePointButton
-                  accentColor={activeAccentColor}
-                  disabled={scoreLocked}
-                  key={`score-${action.points}`}
-                  label={action.label}
-                  onPress={() => handleAddPoints(action.points)}
-                />
-              ))}
-            </View>
-
-            <View style={styles.utilityRow}>
-              <ScoreActionPanel
-                canUndo={canUndo}
-                isCompact={isCompact}
-                onResetCurrentSet={resetCurrentSet}
-                onResetMatch={resetMatch}
-                onUndo={undoLastAction}
-                phase={phase}
-              />
-            </View>
+                <View style={styles.utilityRow}>
+                  <ScoreActionPanel
+                    canUndo={canUndo}
+                    isCompact={isCompact}
+                    onResetCurrentSet={resetCurrentSet}
+                    onResetMatch={resetMatch}
+                    onUndo={undoLastAction}
+                    phase={phase}
+                  />
+                </View>
+              </>
+            )}
           </View>
         </View>
       </SafeAreaView>
@@ -303,11 +350,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 10,
   },
+  bottomDockLandscape: {
+    gap: 4,
+    paddingVertical: 3,
+  },
+  landscapeTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pointsRowExpand: {
+    flex: 1,
+  },
   cardRow: {
     flex: 1,
     flexDirection: 'row',
     gap: spacing.sm,
     minHeight: 0,
+  },
+  cardRowPortrait: {
+    flexDirection: 'column',
   },
   pointButton: {
     flex: 1,

@@ -6,12 +6,14 @@ import { trucoAssets } from '@/constants/trucoAssets';
 
 interface CrystalMarkerBoardProps {
   accentColor: string;
+  placementSeed: number;
   score: number;
   targetScore: number;
 }
 
 export function CrystalMarkerBoard({
   accentColor,
+  placementSeed,
   score,
   targetScore,
 }: CrystalMarkerBoardProps) {
@@ -44,6 +46,7 @@ export function CrystalMarkerBoard({
         <PointMarkers
           accentColor={accentColor}
           markerStyle="crystals"
+          placementSeed={placementSeed}
           score={score}
           targetScore={targetScore}
           turned={turned}

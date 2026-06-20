@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { CardPointTracker } from '@/components/CardPointTracker';
@@ -10,6 +11,7 @@ interface CardScoreProps {
   isActive: boolean;
   label: string;
   onPress: () => void;
+  placementSeed: number;
   score: number;
   scoreStyle: ScoreStyle;
   sets: number;
@@ -24,6 +26,7 @@ export function CardScore({
   isActive,
   label,
   onPress,
+  placementSeed,
   score,
   scoreStyle,
   sets,
@@ -33,7 +36,9 @@ export function CardScore({
 }: CardScoreProps) {
   const { height, width } = useWindowDimensions();
   const compact = width < 420 || height < 760;
+  const isLandscape = width > height;
   const scoreLabel = `${score}`.padStart(2, '0');
+  const [markerHeight, setMarkerHeight] = useState(0);
 
   return (
     <Pressable
@@ -74,9 +79,13 @@ export function CardScore({
         </View>
       </View>
 
-      <View style={styles.markerZone}>
+      <View
+        onLayout={(e) => setMarkerHeight(e.nativeEvent.layout.height)}
+        style={styles.markerZone}>
         <CardPointTracker
           accentColor={accentColor}
+          availableHeight={markerHeight}
+          placementSeed={placementSeed}
           score={score}
           scoreStyle={scoreStyle}
           targetScore={targetScore}
@@ -90,7 +99,8 @@ export function CardScore({
           style={[
             styles.scoreValue,
             { color: isActive ? accentColor : colors.cream },
-            compact && styles.scoreValueCompact,
+            compact && !isLandscape && styles.scoreValueCompact,
+            isLandscape && styles.scoreValueLandscape,
           ]}>
           {scoreLabel}
         </Text>
@@ -113,7 +123,9 @@ const styles = StyleSheet.create({
   identityBlock: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   markerZone: {
     flex: 1,
@@ -141,6 +153,10 @@ const styles = StyleSheet.create({
   scoreValueCompact: {
     fontSize: 24,
     lineHeight: 24,
+  },
+  scoreValueLandscape: {
+    fontSize: 18,
+    lineHeight: 18,
   },
   seatChip: {
     alignSelf: 'flex-start',

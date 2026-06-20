@@ -41,6 +41,14 @@ const defaultScoreActions: ScoreAction[] = [
   { points: 12, label: '+12', description: 'Doze' },
 ];
 
+const espanholScoreActions: ScoreAction[] = [
+  { points: 1, label: '+1', description: 'Mao' },
+  { points: 2, label: '+2', description: 'Dos' },
+  { points: 3, label: '+3', description: 'Truco' },
+  { points: 4, label: '+4', description: 'Cuatro' },
+  { points: 9, label: '+9', description: 'Nueve' },
+];
+
 export const TRUCO_VARIANTS: VariantOption[] = [
   {
     id: 'truco-paulista',
@@ -51,8 +59,8 @@ export const TRUCO_VARIANTS: VariantOption[] = [
   {
     id: 'truco-espanhol',
     label: 'Truco Espanhol',
-    description: 'Estrutura pronta para regras dedicadas; por enquanto usa os mesmos atalhos.',
-    scoreActions: defaultScoreActions,
+    description: 'Regras espanholas: mao, dos, truco, cuatro e nueve.',
+    scoreActions: espanholScoreActions,
   },
 ];
 

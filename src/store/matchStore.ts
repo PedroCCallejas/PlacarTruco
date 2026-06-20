@@ -58,6 +58,8 @@ const initialSnapshot: MatchSnapshot = {
 const createId = (): string =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+const createPlacementSeed = (): number => Math.floor(Math.random() * 1_000_000);
+
 const normalizeTeamName = (value: unknown, fallback: string): string => {
   const trimmed = normalizeText(value);
   return trimmed.length > 0 ? trimmed : fallback;
@@ -542,6 +544,7 @@ export const useMatchStore = create<MatchStore>()(
     (set) => ({
       ...initialSnapshot,
       history: [],
+      placementSeed: createPlacementSeed(),
       scoreStyle: DEFAULT_SCORE_STYLE,
       addPoints: (team, points) => {
         set((state) => {
@@ -614,6 +617,7 @@ export const useMatchStore = create<MatchStore>()(
         set(() => ({
           ...initialSnapshot,
           history: [],
+          placementSeed: createPlacementSeed(),
           scoreStyle: DEFAULT_SCORE_STYLE,
         }));
       },
@@ -665,6 +669,7 @@ export const useMatchStore = create<MatchStore>()(
             currentScore: createScore(),
             phase: 'inProgress',
             pendingResult: null,
+            placementSeed: createPlacementSeed(),
             history: appendHistory(state.history, historyEntry),
           };
         });
@@ -699,6 +704,7 @@ export const useMatchStore = create<MatchStore>()(
             sets: createScore(),
             phase: 'inProgress',
             pendingResult: null,
+            placementSeed: createPlacementSeed(),
             realtime: createRealtimeConfig(),
             history: appendHistory(state.history, historyEntry),
           };
@@ -728,6 +734,7 @@ export const useMatchStore = create<MatchStore>()(
 
           return {
             ...nextSnapshot,
+            placementSeed: createPlacementSeed(),
             history: appendHistory(state.history, historyEntry),
           };
         });

@@ -8,6 +8,8 @@ import type { ScoreStyle, TrucoVariant } from '@/types/match';
 
 interface CardPointTrackerProps {
   accentColor: string;
+  availableHeight: number;
+  placementSeed: number;
   score: number;
   scoreStyle: ScoreStyle;
   targetScore: number;
@@ -45,6 +47,8 @@ function getCaption(
 
 export function CardPointTracker({
   accentColor,
+  availableHeight,
+  placementSeed,
   score,
   scoreStyle,
   targetScore,
@@ -57,6 +61,7 @@ export function CardPointTracker({
       {scoreStyle === 'cards' ? (
         <CardMarkerBoard
           accentColor={accentColor}
+          availableHeight={availableHeight}
           score={score}
           targetScore={targetScore}
           variant={variant}
@@ -66,6 +71,7 @@ export function CardPointTracker({
       {scoreStyle === 'beans' ? (
         <BeanMarkerBoard
           accentColor={accentColor}
+          placementSeed={placementSeed}
           score={score}
           targetScore={targetScore}
         />
@@ -74,12 +80,15 @@ export function CardPointTracker({
       {scoreStyle === 'crystals' ? (
         <CrystalMarkerBoard
           accentColor={accentColor}
+          placementSeed={placementSeed}
           score={score}
           targetScore={targetScore}
         />
       ) : null}
 
-      <Text style={[styles.caption, { color: accentColor }]}>{caption}</Text>
+      {scoreStyle !== 'cards' ? (
+        <Text style={[styles.caption, { color: accentColor }]}>{caption}</Text>
+      ) : null}
     </View>
   );
 }
@@ -94,6 +103,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   root: {
+    flex: 1,
     gap: spacing.xs,
   },
 });

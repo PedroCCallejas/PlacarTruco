@@ -9,7 +9,7 @@ export const trucoAssets = {
   },
   cards: {
     card10Front: require('../../assets/truco/cards/card-10-front.png') as TrucoAssetSource,
-    card9Front: require('../../assets/truco/cards/card-9-front.png') as TrucoAssetSource,
+    card9Front: require('../../assets/truco/cards/card-9-front-ouro.png') as TrucoAssetSource,
     cardBackRed: require('../../assets/truco/cards/card-back-red.png') as TrucoAssetSource,
     cardBackBlue: require('../../assets/truco/cards/card-back-blue.png') as TrucoAssetSource,
   },
